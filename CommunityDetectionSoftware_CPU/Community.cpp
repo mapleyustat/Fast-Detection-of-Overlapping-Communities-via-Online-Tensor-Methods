@@ -709,12 +709,50 @@ void second_whiten(SparseMatrix<double> Gx_a, SparseMatrix<double> Gx_b, SparseM
     Z_C_denominator = inv_nx * Z_C_denominator;//NC * NB??????????????
     //cout << "Z_C_denominator.nonZeros():" <<Z_C_denominator.nonZeros()<< endl;
     cout << "--------------starting to calculate Z_B---------------------------"<< endl;
-    pair<SparseMatrix<double>, SparseMatrix<double> > pairB= pinv_symNystrom_sparse(Z_B_denominator);
+    // if dimensions are too large, use symmetric approximation and requires a even partition nA=nB=nC
+    if(NA+NB+NC<200000)
+    {
+        pair<SparseMatrix<double>, SparseMatrix<double> > pairB= pinv_asymNystrom_sparse(Z_B_denominator);
+    }
+    else
+    {
+        if (NA!=NB or NA!=NC or NB!=NC)
+        {
+            printf("Error! For large datasets, we need even partition (|A|=|B|=|C|).\n"); fflush(stdout);
+            exit(1);
+        }
+        else
+        {
+            // symmetric approximation
+            pair<SparseMatrix<double>, SparseMatrix<double> > pairB= pinv_symNystrom_sparse(Z_B_denominator);
+        }
+    }
+    //
+    //pair<SparseMatrix<double>, SparseMatrix<double> > pairB= pinv_symNystrom_sparse(Z_B_denominator);
     SparseMatrix<double> C_inv_pairB =pairB.first;
     SparseMatrix<double> W_pairB = pairB.second;
     
     cout << "--------------starting to calculate Z_C---------------------------"<< endl;
-    pair<SparseMatrix<double>, SparseMatrix<double> > pairC= pinv_symNystrom_sparse(Z_C_denominator);
+    // if dimensions are too large, use symmetric approximation and requires a even partition nA=nB=nC
+    if(NA+NB+NC<200000)
+    {
+        pair<SparseMatrix<double>, SparseMatrix<double> > pairC= pinv_asymNystrom_sparse(Z_C_denominator);
+    }
+    else
+    {
+        if (NA!=NB or NA!=NC or NB!=NC)
+        {
+            printf("Error! For large datasets, we need even partition (|A|=|B|=|C|).\n"); fflush(stdout);
+            exit(1);
+        }
+        else
+        {
+            // symmetric approximation
+            pair<SparseMatrix<double>, SparseMatrix<double> > pairC= pinv_symNystrom_sparse(Z_C_denominator);
+        }
+    }
+    //
+    //pair<SparseMatrix<double>, SparseMatrix<double> > pairC= pinv_symNystrom_sparse(Z_C_denominator);
     SparseMatrix<double> C_inv_pairC =  pairC.first;
     SparseMatrix<double> W_pairC = pairC.second;
     //svd of 
@@ -727,11 +765,52 @@ void second_whiten(SparseMatrix<double> Gx_a, SparseMatrix<double> Gx_b, SparseM
     //cout << "--------------generating random_mat for M2---------------"<<endl;
     SparseMatrix<double> random_mat = random_embedding_mat((long) Gx_a.cols(),KHID);
     SparseMatrix<double> M2_tmp1 = Z_B_numerator.transpose() * random_mat;
+   
     SparseMatrix<double> M2_tmp2 = C_inv_pairB * M2_tmp1;
     SparseMatrix<double> M2_tmp3 = W_pairB.transpose() * M2_tmp2;
     SparseMatrix<double> M2_tmp4 = C_inv_pairB.transpose() * M2_tmp3;
-    SparseMatrix<double> M2_tmp6 = Z_C_denominator  *M2_tmp4;
-    SparseMatrix<double> M2_tmp8 = C_inv_pairC  *M2_tmp6;
+    // if dimensions are too large, use symmetric approximation and requires a even partition nA=nB=nC
+    if(NA+NB+NC<200000)
+    {
+        SparseMatrix<double> M2_tmp5 = Z_B_denominator * M2_tmp4;
+    }
+    else
+    {
+        if (NA!=NB or NA!=NC or NB!=NC)
+        {
+            printf("Error! For large datasets, we need even partition (|A|=|B|=|C|).\n"); fflush(stdout);
+            exit(1);
+        }
+        else
+        {
+            // symmetric approximation
+            SparseMatrix<double> M2_tmp5 = M2_tmp4;
+        }
+    }
+    //
+    
+    
+    
+        SparseMatrix<double> M2_tmp6 = Z_C_denominator  *M2_tmp5;
+    // if dimensions are too large, use symmetric approximation and requires a even partition nA=nB=nC
+    if(NA+NB+NC<200000)
+    {
+        SparseMatrix<double> M2_tmp7 = Z_C_denominator.transpose() * M2_tmp6;
+    }
+    else
+    {
+        if (NA!=NB or NA!=NC or NB!=NC)
+        {
+            printf("Error! For large datasets, we need even partition (|A|=|B|=|C|).\n"); fflush(stdout);
+            exit(1);
+        }
+        else
+        {
+            SparseMatrix<double> M2_tmp7 = M2_tmp6;
+        }
+    }
+    
+    SparseMatrix<double> M2_tmp8 = C_inv_pairC  *M2_tmp7;
     SparseMatrix<double> M2_tmp9 = W_pairC * M2_tmp8;
     SparseMatrix<double> M2_tmp10 = C_inv_pairC.transpose() * M2_tmp9;
     SparseMatrix<double> M2 =Z_C_numerator * M2_tmp10;
@@ -742,7 +821,7 @@ void second_whiten(SparseMatrix<double> Gx_a, SparseMatrix<double> Gx_b, SparseM
     cout << "----------end of caluclating M2, start M2_alpha0-----"<<endl;
     // M2 -> M2_alpha0
      cout <<"-------------------computing square_mu_a_sparse--------"<<endl;
-    double para = (double)alpha0/((double)alpha0+1);
+    double para = ((double)alpha0/((double)alpha0+1))+0.001;
     SparseMatrix<double> tmp_square(M2.rows(),M2.rows());
     tmp_square.makeCompressed();
     for (int i = 0; i < M2.rows(); i++)
