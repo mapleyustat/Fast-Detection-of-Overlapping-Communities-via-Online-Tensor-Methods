@@ -47,13 +47,14 @@ using namespace Eigen;
 
 // number of nodes in the partitions
 #define NX 263517// 65879//263517//10010// 263517
-#define NA 263516// 65879//263516//9529//263516
+#define NA 263517// 65879//263516//9529//263516
 #define NB 263517//65879//263517//9530//263517
-#define NC 263516//65880//263516//9529//263516
+#define NC 263517//65880//263516//9529//263516
 #define KHID 10
 #define KTRUE 6003//159//6003
 //#define ErrCal
-//#define NUM_THRESH 8
+#define NUM_THRESH 8
+#define thresh_vec_def {0.3, 0.25, 0.2, 0.18, 0.15, 0.12, 0.1,0.08}
 
 #define alpha0  1.0 // dirichlet concentration parameter
 #define LEARNRATE 1e-9 // learning rate for tensor decomposition
@@ -69,28 +70,30 @@ using namespace Eigen;
 
 
 // dataset paths
-#define PATH "./DBLP_1054066/"
-#define FILE_PI_WRITE PATH "DBLP_PI_WRITE_1054066.txt"
-#define FILE_WHITE_WRITE PATH "DBLP_WHITE_WRITE_1054066.txt"
-#define FILE_ZB_WRITE PATH "DBLP_ZB_WRITE_1054066.txt"
-#define FILE_ZC_WRITE PATH "DBLP_ZC_WRITE_1054066.txt"
-#define FILE_INVLAMPHI_WRITE PATH "DBLP_INVLAMPHI_WRITE_1054066.txt"
+#define PATH "./data/"
+#define FILE_PI_WRITE PATH "PI_WRITE.txt"
+#define FILE_WHITE_WRITE PATH "WHITE_WRITE.txt"
+#define FILE_ZB_WRITE PATH "ZB_WRITE.txt"
+#define FILE_ZC_WRITE PATH "ZC_WRITE.txt"
+#define FILE_INVLAMPHI_WRITE PATH "INVLAMPHI_WRITE.txt"
 
-#define FILE_GA PATH "DBLP_Gx_a_1054066.txt"
-#define FILE_GB PATH "DBLP_Gx_b_1054066.txt"
-#define FILE_GC PATH "DBLP_Gx_c_1054066.txt"
-#define FILE_Gb_a PATH "DBLP_Gb_a_1054066.txt"
-#define FILE_Gb_c PATH "DBLP_Gb_c_1054066.txt"
-#define FILE_Gc_a PATH "DBLP_Gc_a_1054066.txt"
+#define FILE_GA PATH "Gx_a.txt"
+#define FILE_GB PATH "Gx_b.txt"
+#define FILE_GC PATH "Gx_c.txt"
+#define FILE_Gb_a PATH "Gb_a.txt"
+#define FILE_Gb_c PATH "Gb_c.txt"
+#define FILE_Gc_a PATH "Gc_a.txt"
 
-#define FILE_Pi_a PATH "DBLP_Pi_true_a_1054066.txt"
-#define FILE_Pi_b PATH "DBLP_Pi_true_b_1054066.txt"
-#define FILE_Pi_c PATH "DBLP_Pi_true_c_1054066.txt"
-#define FILE_Pi_x PATH "DBLP_Pi_true_x_1054066.txt"
+#define FILE_Pi_a PATH "Pi_true_a.txt"
+#define FILE_Pi_b PATH "Pi_true_b.txt"
+#define FILE_Pi_c PATH "Pi_true_c.txt"
+#define FILE_Pi_x PATH "Pi_true_x.txt"
 
-#define USER_DEFINED_EDGES 0    //0 for all edges
-#define MAX_WEIGHT 150
+
 #define edgeD_MAX -log(0.94) // this is only correct when distances are normalized to be smaller than
+
+
+
 int write_pi(char *filename, SparseMatrix<double> spmat);
 
 //Furong's function for calculating p-values 
