@@ -86,11 +86,13 @@ int main(int argc, const char * argv[])
   SparseMatrix<double> Data_c_G = W.transpose() * Z_C * Gx_c.transpose();
   VectorXd Data_c_mu  = W.transpose() * Z_C * mu_c;
   gettimeofday(&stop_timeval_pre, NULL);   // measuring stop time for pre processing
-  cout << "----------------------------After whitening---------------------------" << endl;
+  
   measure_stop_pre = stop_timeval_pre.tv_usec + (timestamp_t)stop_timeval_pre.tv_sec * 1000000;
   measure_start_pre = start_timeval_pre.tv_usec + (timestamp_t)start_timeval_pre.tv_sec * 1000000;
   time_pre = (measure_stop_pre - measure_start_pre) / 1000000.0L;
   printf("time taken by preprocessing = %5.25e (Seconds)\n",time_pre);
+    
+  cout << "----------------------------After whitening---------------------------" << endl;
   // stochastic updates
   VectorXd lambda(KHID); 
   MatrixXd phi_new(KHID,KHID);
