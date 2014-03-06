@@ -7,8 +7,8 @@ build: # main.cpp Community.cpp Community.h
 	g++ -o EXEC $(SRC) $(CFLAGS) $(COPTZ) $(SUPP_WARN) -DNDEBUG -std=c++0x
 
 run:
-	./main_com
+	./EXEC
 
 clean:
-	rm main_com
+	rm EXEC
 
