@@ -12,4 +12,4 @@
 *.la
 *.a
 CommunityDetectionSoftware_CPU/CommunityDetection.opensdf
-CommunityDetectionSoftware_CPU/CommunityDetection.sdf
+Debug/
