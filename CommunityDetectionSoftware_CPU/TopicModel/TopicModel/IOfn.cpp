@@ -40,12 +40,12 @@ Eigen::SparseMatrix<double> read_G_sparse(char *file_name, char *G_name, int N1,
 		if (DATATYPE == 1)
 		{
 			fscanf(file_ptr, "%lf", &val);
-			//			G_mat.coeffRef(r_idx - 1, c_idx - 1) = val; // this is now modified in r and c idx; reads in weighted also;
+//			G_mat.coeffRef(r_idx - 1, c_idx - 1) = val; // this is now modified in r and c idx; reads in weighted also;
 			triplets_sparse.push_back(Triplet<double>(r_idx - 1, c_idx - 1, val));
 		}
 		else
-			//		G_mat.coeffRef(r_idx - 1, c_idx - 1) = 1.0;
-			triplets_sparse.push_back(Triplet<double>(r_idx - 1, c_idx - 1, 1.0));
+//		G_mat.coeffRef(r_idx - 1, c_idx - 1) = 1.0;
+		triplets_sparse.push_back(Triplet<double>(r_idx - 1, c_idx - 1, 1.0));
 	}
 	fclose(file_ptr);
 	G_mat.setFromTriplets(triplets_sparse.begin(), triplets_sparse.end());
@@ -65,6 +65,23 @@ int write_pi(char *filename, SparseMatrix<double> mat)
 	f.close();
 	return 0;
 }
+
+int write_alpha(char * filename, VectorXd vec){
+	fstream f(filename, ios::out);
+	for (int i = 0; i < vec.size(); i++){
+		f << vec(i) << endl;
+	}
+	f.close();
+	return 0;
+}
+
+int write_beta(char * filename, MatrixXd mat){
+	fstream f(filename, ios::out);
+	f << mat << endl;
+	f.close();
+	return 0;
+}
+
 
 
 void furongprintVector(double value[], long len, char *character) // print the elements of an array

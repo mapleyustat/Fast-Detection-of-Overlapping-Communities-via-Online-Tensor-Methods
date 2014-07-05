@@ -113,20 +113,27 @@ SparseMatrix<double> embedding_mat(long cols_num, int k)
 	}
 	return phi;
 }
-
 //Nystrom for sparseSVD
 SparseMatrix<double> random_embedding_mat(long cols_num, int k)
 {	// phi.transpose() * phi is always diagonal 
 	srand(clock());
 	SparseMatrix<double> phi(cols_num, k);
-	for (int i = 0; i<cols_num; i++)
-	{
+	if (cols_num != k){
+		for (int i = 0; i < cols_num; i++)
+		{
 
-		int r = rand() % k;							// randomly-------
-		int r_sign = rand() % 5;
-		double p_rand = (double)r_sign / (double)5.0;
-		if (p_rand<0.5)
-			phi.coeffRef(i, r) = -1;
+			int r = rand() % k;							// randomly-------
+			int r_sign = rand() % 5;
+			double p_rand = (double)r_sign / (double)5.0;
+			if (p_rand < 0.5)
+				phi.coeffRef(i, r) = -1.0;
+		}
+	}
+	else
+	{
+		for (int i = 0; i < cols_num; i++){
+			phi.coeffRef(i, i) = 1.0;
+		}
 	}
 	phi.makeCompressed();
 	phi.prune(TOLERANCE);
@@ -166,6 +173,7 @@ SparseMatrix<double> orthogonalize_cols(MatrixXd Y)
 }
 
 
+
 pair< SparseMatrix<double>, SparseVector<double> > SVD_symNystrom_sparse(SparseMatrix<double> M)
 {
 	pair< SparseMatrix<double>, SparseVector<double> > USigma;
@@ -174,8 +182,8 @@ pair< SparseMatrix<double>, SparseVector<double> > SVD_symNystrom_sparse(SparseM
 	{
 		SparseMatrix<double> Q;
 		if (M.cols() > k_prime){
-			SparseMatrix<double> random_mat = random_embedding_mat((long)M.cols(), k_prime);
-			Q = M * random_mat;
+			SparseMatrix<double> random_mat = random_embedding_mat((long)M.cols(), k_prime);// : random_embedding_mat_dense((long)M.cols(), k_prime);
+			Q = M * random_mat; //Q.makeCompressed(); Q.prune(TOLERANCE);
 		}
 		else{
 			Q = M;
@@ -184,34 +192,22 @@ pair< SparseMatrix<double>, SparseVector<double> > SVD_symNystrom_sparse(SparseM
 		SparseMatrix<double> C;
 		if (M.cols() < Q.rows()){
 			SparseMatrix<double> QQ = Q.block(0, 0, M.cols(), Q.cols());
-			C = M * QQ;
+			C = M * QQ; 
 		}
 		else
 		{
 			C = M * Q;
 		}
-
+		
 		MatrixXd Z = (MatrixXd)C.transpose() * C;
-//		cout << "-----------Z:nonZeros()" << Z.nonZeros() << "-------------" << endl;
 		pair<pair<Eigen::MatrixXd, Eigen::MatrixXd>, Eigen::VectorXd> svd_Z = latenttree_svd(Z);
-//		cout << "-----------svd_Z.first.first:nonZeros()" << svd_Z.first.first.nonZeros() << "-------------" << endl;
-//		cout << "-----------svd_Z.first.second:nonZeros()" << svd_Z.first.second.nonZeros() << "-------------" << endl;
-//		cout << "-----------svd_Z.second:nonZeros()" << svd_Z.second.nonZeros() << "-------------" << endl;
 		MatrixXd V = (svd_Z.first.second).leftCols(KHID);
-//		cout << "-----------V:nonZeros()" << V.nonZeros() << "-------------" << endl;
 		SparseMatrix<double> V_sparse = V.sparseView();
 		VectorXd S = svd_Z.second.head(KHID);
-//		cout << "-----------S:nonZeros()" << S.nonZeros() << "-------------" << endl;
 		USigma.second = S.cwiseSqrt().sparseView(); // S.array().sqrt();
-//		cout << "-----------S.cwiseSqrt():nonZeros()" << S.cwiseSqrt().nonZeros() << "-------------" << endl;
-//		cout << "S" << endl << S << endl;
 		MatrixXd diag_inv_S_sqrt = pinv_vector(S.cwiseSqrt()).asDiagonal();
-//		cout << "-----------diag_inv_S_sqrt:nonZeros()" << diag_inv_S_sqrt.nonZeros() << "-------------" << endl;
 		SparseMatrix<double> diag_inv_S_sqrt_s = diag_inv_S_sqrt.sparseView();
 		USigma.first = C * (V_sparse)* diag_inv_S_sqrt_s;
-
-//		cout << "-----------USigma.first.:nonZeros()" << USigma.first.nonZeros() << "-------------" << endl;
-//		cout << "-----------USigma.second:nonZeros()" << USigma.second.nonZeros() << "-------------" << endl;
 	}
 	else
 	{
@@ -224,14 +220,9 @@ pair< SparseMatrix<double>, SparseVector<double> > SVD_symNystrom_sparse(SparseM
 
 pair<pair<SparseMatrix<double>, SparseMatrix<double> >, SparseVector<double> > SVD_asymNystrom_sparse(SparseMatrix<double> X){
 	// result.first.first is U, result.first.second is V, result.second is L.
-//	cout << "-----------X:nonZeros()" << X.nonZeros() << "-------------" << endl;
-	int k_prime = 2 * KHID;
-	SparseMatrix<double> random_mat = random_embedding_mat((long)X.cols(), k_prime);
-	SparseMatrix<double> Gram = X.transpose()*(X *random_mat);
-//	cout << "-----------Gram:nonZeros()" << Gram.nonZeros() << "-------------" << endl;
+	SparseMatrix<double> RandomMat = embedding_mat(X.cols(), 2 * KHID);
+	SparseMatrix<double> Gram = X.transpose()*(X*RandomMat);
 	pair< SparseMatrix<double>, SparseVector<double> > V_L = SVD_symNystrom_sparse(Gram);
-//	cout << "-----------V_L.first.:nonZeros()" << V_L.first.nonZeros() << "-------------" << endl;
-//	cout << "-----------V_L.second:nonZeros()" << V_L.second.nonZeros() << "-------------" << endl;
 	VectorXd L_inv_vec = pinv_vector((VectorXd)V_L.second);
 	L_inv_vec = L_inv_vec.cwiseSqrt();
 	MatrixXd L_inv = L_inv_vec.asDiagonal();
@@ -301,9 +292,6 @@ pair<pair<SparseMatrix<double>, SparseMatrix<double> >, SparseMatrix<double> > p
 
 	pair<pair<SparseMatrix<double>, SparseMatrix<double> >, SparseVector<double> > UV_L = SVD_asymNystrom_sparse(X);
 	// UV_L.first.first is U, UV_L.first.second is V, UV_L.second is L.
-//	cout << "-----------UV_L.first.first:nonZeros()" << UV_L.first.first.nonZeros() << "-------------" << endl;
-//	cout << "-----------UV_L.first.second:nonZeros()" << UV_L.first.second.nonZeros() << "-------------" << endl;
-//	cout << "-----------UV_L.second:nonZeros()" << UV_L.second.nonZeros() << "-------------" << endl;
 	VectorXd L_inv_vec = pinv_vector((VectorXd)UV_L.second);
 	MatrixXd L_inv = L_inv_vec.asDiagonal();
 	SparseMatrix<double> L_inv_s = L_inv.sparseView();

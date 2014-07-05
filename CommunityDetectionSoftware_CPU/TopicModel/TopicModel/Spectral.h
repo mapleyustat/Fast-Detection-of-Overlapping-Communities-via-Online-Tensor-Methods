@@ -8,8 +8,8 @@
 *
 * All rights reserved.
 *******************************************************/
-#ifndef __CommunityDetection__Spectral__
-#define __CommunityDetection__Spectral__
+#ifndef __TopicModel__Spectral__
+#define __TopicModel__Spectral__
 #include "stdafx.h"
 pair<pair<Eigen::MatrixXd, Eigen::MatrixXd>, Eigen::VectorXd> latenttree_svd(Eigen::MatrixXd A);
 pair<pair<SparseMatrix<double>, SparseMatrix<double> >, SparseVector<double> >latenttree_svd(SparseMatrix<double> A);

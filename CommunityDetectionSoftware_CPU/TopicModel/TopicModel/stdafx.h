@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef __CommunityDetection__stdafx__
-#define __CommunityDetection__stdafx__
+#ifndef __TopicModel__stdafx__
+#define __TopicModel__stdafx__
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <stdio.h>
@@ -48,9 +48,6 @@
 #include "Spectral.h"
 #include "Pvalue.h"
 
-
-//#define CENTERED	//asymmetric
-//#define UNCENTERED	//symmetric
 
 
 #define LEARNRATE 1e-9

@@ -15,7 +15,7 @@ int furong_atoi(string word);
 double furong_atof(string word);
 
 void second_whiten(SparseMatrix<double> Gx_a, SparseMatrix<double> Gx_b, SparseMatrix<double> Gx_c, \
-	SparseMatrix<double> &W, SparseMatrix<double> &Z_B, SparseMatrix<double> &Z_C, VectorXd &mu_a, VectorXd &mu_b, VectorXd &mu_c);
+	SparseMatrix<double> &W, SparseMatrix<double> &Z_B_part1, SparseMatrix<double> &Z_B_part2, SparseMatrix<double> &Z_C_part1, SparseMatrix<double> &Z_C_part2, VectorXd &mu_a, VectorXd &mu_b, VectorXd &mu_c);
 void tensorDecom_alpha0(SparseMatrix<double> D_a_mat, VectorXd D_a_mu, \
 	SparseMatrix<double> D_b_mat, VectorXd D_b_mu, \
 	SparseMatrix<double> D_c_mat, VectorXd D_c_mu, \

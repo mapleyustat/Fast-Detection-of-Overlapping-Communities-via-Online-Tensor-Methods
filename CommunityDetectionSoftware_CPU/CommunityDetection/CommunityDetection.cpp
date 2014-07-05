@@ -15,26 +15,32 @@ double alpha0;
 int DATATYPE;
 int main(int argc, const char * argv[])
 {
-	// number of nodes in the partitions
+	// 65879 65879 65879 65880 10 0.01 0
+
 	NX = furong_atoi(argv[1]);
 	NA = furong_atoi(argv[2]);
-	NA = furong_atoi(argv[3]);
-	NA = furong_atoi(argv[4]);
+	NB = furong_atoi(argv[3]);
+	NC = furong_atoi(argv[4]);
 	KHID = furong_atoi(argv[5]);
 	alpha0 = furong_atof(argv[6]);
 	DATATYPE = furong_atoi(argv[7]);
 
-	// const char* PATH = argv[8];
-	const char* FILE_PI_WRITE = argv[8];
-	const char* FILE_WHITE_WRITE = argv[9];
-	const char* FILE_INVLAMPHI_WRITE = argv[10];
+	// $(SolutionDir)\data\Gx_a.txt $(SolutionDir)\data\Gx_b.txt $(SolutionDir)\data\Gx_c.txt $(SolutionDir)\data\Gb_a.txt $(SolutionDir)\data\Gc_a.txt 
 
-	const char* FILE_GA = argv[11];
-	const char* FILE_GB = argv[12];
-	const char* FILE_GC = argv[13];
-	const char* FILE_Gb_a = argv[14];
-	const char* FILE_Gc_a = argv[15];
+	const char* FILE_GA = argv[8];
+	const char* FILE_GB = argv[9];
+	const char* FILE_GC = argv[10];
+	const char* FILE_Gb_a = argv[11];
+	const char* FILE_Gc_a = argv[12];
 
+	//$(SolutionDir)\data\result\pi.txt $(SolutionDir)\data\result\white.txt  
+
+	const char* FILE_PI_WRITE = argv[13];
+	const char* FILE_WHITE_WRITE = argv[14];
+//	const char* FILE_INVLAMPHI_WRITE = argv[15];
+
+	
+	cout << "(1) Reading Graph Partitions----" << endl;
 	TIME_start = clock();
 	SparseMatrix<double> Gx_a(NX, NA);	Gx_a.resize(NX, NA);	SparseMatrix<double> Gx_b(NX, NB);	Gx_b.resize(NX, NB);	SparseMatrix<double> Gx_c(NX, NC);	Gx_c.resize(NX, NC);	Gx_a.makeCompressed();	Gx_b.makeCompressed();	Gx_c.makeCompressed();
 	// reading the partitions
@@ -43,27 +49,29 @@ int main(int argc, const char * argv[])
 	Gx_c = read_G_sparse((char *)FILE_GC, "GX_C", NX, NC);
 	TIME_end = clock();
 	double time_readfile = double(TIME_end - TIME_start) / CLOCKS_PER_SEC;
-	printf("Exec Time reading matrices before preproc = %5.25e (Seconds)\n", time_readfile);
+	printf("Exec Time reading matrices = %5.25e (Seconds)\n", time_readfile);
 
 
 	
-	cout << "----------------------------Before whitening--------------------------" << endl;
+	cout << "(2) Whitening----" << endl;
 	TIME_start = clock();
-	SparseMatrix<double> W(NA, KHID); W.resize(NA, KHID); W.makeCompressed();	SparseMatrix<double> Z_B(NA, NB); Z_B.resize(NA, NB); Z_B.makeCompressed();	SparseMatrix<double> Z_C(NA, NC); Z_C.resize(NA, NC); Z_C.makeCompressed();
+	SparseMatrix<double> W(NA, KHID); W.resize(NA, KHID); W.makeCompressed();	
+	SparseMatrix<double> Z_B_part1(NA, KHID); SparseMatrix<double>Z_B_part2(KHID, NB); Z_B_part1.resize(NA, KHID); Z_B_part2.resize(KHID, NB);
+	SparseMatrix<double> Z_C_part1(NA, KHID); SparseMatrix<double>Z_C_part2(KHID, NC); Z_C_part1.resize(NA, KHID); Z_C_part2.resize(KHID, NC);
 	VectorXd mu_a(NA);	VectorXd mu_b(NB);	VectorXd mu_c(NC);
 	
-	second_whiten(Gx_a, Gx_b, Gx_c, W, Z_B, Z_C, mu_a, mu_b, mu_c);
+	second_whiten(Gx_a, Gx_b, Gx_c, W, Z_B_part1,Z_B_part2, Z_C_part1, Z_C_part2, mu_a, mu_b, mu_c);
 
 	// whitened datapoints
 	SparseMatrix<double> Data_a_G = W.transpose() * Gx_a.transpose();	VectorXd Data_a_mu = W.transpose() * mu_a;
-	SparseMatrix<double> Data_b_G = W.transpose() * Z_B * Gx_b.transpose();	VectorXd Data_b_mu = W.transpose() * Z_B * mu_b;
-	SparseMatrix<double> Data_c_G = W.transpose() * Z_C * Gx_c.transpose();	VectorXd Data_c_mu = W.transpose() * Z_C * mu_c;
+	SparseMatrix<double> Data_b_G = (W.transpose() * Z_B_part1)* Z_B_part2 * Gx_b.transpose();	VectorXd Data_b_mu = (W.transpose() * Z_B_part1)* Z_B_part2 * mu_b;
+	SparseMatrix<double> Data_c_G = (W.transpose() * Z_C_part1)* Z_C_part2 * Gx_c.transpose();	VectorXd Data_c_mu = (W.transpose() * Z_C_part1)* Z_C_part2 * mu_c;
 	TIME_end = clock();
 	double time_whitening = double(TIME_end - TIME_start) / CLOCKS_PER_SEC;
 	printf("time taken by whitening = %5.25e (Seconds)\n", time_whitening);
 
 	
-	cout << "------------------------------Before tensor decomposition----------------" << endl;
+	cout << "(3) Tensor decomposition---------" << endl;
 	TIME_start = clock();
 	VectorXd lambda(KHID);
 	MatrixXd phi_new(KHID, KHID);
@@ -77,9 +85,8 @@ int main(int argc, const char * argv[])
 	printf("time taken by whitening = %5.25e (Seconds)\n", time_stpm);
 
 
-	// post processing
 	
-
+	cout << "(4) Postprocessing to get membership vectors for individuals---------" << endl;
 	TIME_start = clock();
 	// read the matrix Gab and Gac
 	SparseMatrix<double> Gb_a(NB, NA); Gb_a.resize(NB, NA);
@@ -91,7 +98,7 @@ int main(int argc, const char * argv[])
 	MatrixXd Inv_Lambda = (pinv_vector(lambda)).asDiagonal();
 	SparseMatrix<double> inv_lam_phi = (Inv_Lambda.transpose() * phi_new.transpose()).sparseView();
 	SparseMatrix<double> pi_tmp1 = inv_lam_phi * W.transpose();
-	pi_a = pi_tmp1 * Z_B * Gb_a;	MatrixXd pi_a_dense = (MatrixXd)pi_a; pi_a.resize(0, 0);
+	pi_a = (pi_tmp1* Z_B_part1)* Z_B_part2 * Gb_a;	MatrixXd pi_a_dense = (MatrixXd)pi_a; pi_a.resize(0, 0);
 
 	pi_b = pi_tmp1 * Gb_a.transpose();	MatrixXd pi_b_dense = (MatrixXd)pi_b; pi_b.resize(0, 0);
 
@@ -103,7 +110,12 @@ int main(int argc, const char * argv[])
 	TIME_end = clock();
 	double time_post = double(TIME_end - TIME_start) / CLOCKS_PER_SEC;
 	printf("time taken for post processing = %5.25e (Seconds)\n", time_post);
-	cout << "-------------------------Concatenation for pi_est-------------------- " << endl;
+//	cout << "-----------pi_x_dense:nonZeros()" << pi_x_dense.nonZeros() << "-------------" << endl;
+//	cout << "-----------pi_a_dense:nonZeros()" << pi_a_dense.nonZeros() << "-------------" << endl;
+//	cout << "-----------pi_b_dense:nonZeros()" << pi_b_dense.nonZeros() << "-------------" << endl;
+//	cout << "-----------pi_c_dense:nonZeros()" << pi_c_dense.nonZeros() << "-------------" << endl;
+
+	cout << "(5) Concatenating pi_est-------------------- " << endl;
 
 	// store est_pi
 	long PI_LEN = (long)NX + NA + NB + NC;
@@ -127,10 +139,9 @@ int main(int argc, const char * argv[])
 	My_pi_est_mat = normProbMatrix(My_pi_est_mat);
 	SparseMatrix<double> sparse_my_pi_est_mat = My_pi_est_mat.sparseView();
 
-	cout << "-----------Before writing results: W, Z_B,Z_C and pi-----------" << endl;
+	cout << "(6) Writing results: W, Z_B,Z_C and pi-----------" << endl;
 	write_pi((char *) FILE_PI_WRITE, sparse_my_pi_est_mat);
 	write_pi((char *) FILE_WHITE_WRITE, W);
-	write_pi((char *) FILE_INVLAMPHI_WRITE, inv_lam_phi);
 
 	cout << "Program over" << endl;
 	printf("\ntime taken for execution of the whole program = %5.25e (Seconds)\n", time_whitening + time_stpm  + time_post);
