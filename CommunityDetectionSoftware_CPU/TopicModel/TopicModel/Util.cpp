@@ -66,8 +66,13 @@ void second_whiten_topic(SparseMatrix<double> Gx_a,  \
 	// diagonal(ct) term :
 	VectorXd sec_ord_momDiagVec = Gx_aSquareNorm.transpose() * OnesPseudoX;
 //	sec_ord_momDiagVec = sec_ord_momDiagVec.cwiseProduct(lengthSquareInv);
-	MatrixXd sec_ord_momDiagDense = sec_ord_momDiagVec.asDiagonal();
-	SparseMatrix<double> sec_ord_momDiag = sec_ord_momDiagDense.sparseView();
+	vector<Triplet<double> > triplets_sparse;
+	for (int i = 0; i < sec_ord_momDiagVec.size(); ++i){
+		triplets_sparse.push_back(Triplet<double>(i, i, sec_ord_momDiagVec(i)));
+	}
+	SparseMatrix<double> sec_ord_momDiag(sec_ord_momDiagVec.size(), sec_ord_momDiagVec.size());
+	sec_ord_momDiag.setFromTriplets(triplets_sparse.begin(), triplets_sparse.end());
+
 	SparseMatrix<double> M2 = sec_ord_mom - sec_ord_momDiag*RandomMat; M2 = para_main * M2;
 	//2 .  compute M2 Shift Term
 	double para_shift = alpha0;
